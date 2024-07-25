@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture</title>
+    <style>
+        /* Styles CSS pour l'affichage normal */ 
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .info {
+            margin-bottom: 20px;
+        }
+        .info p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .total {
+            text-align: right;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .total span {
+            font-size: 24px;
+            color: #333;
+        }
+        .new-row {
+            display: none;
+        }
+        input[type="text"],
+        input[type="number"] {
+            border: 0px solid #ddd;
+            padding: 5px;
+            width: 100%;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logo-container img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-right: 20px;
+            border: 2px solid #333;
+            border-radius: 5px;
+        }
+        .logo-upload {
+            margin-right: 20px;
+        }
+        button {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #555;
+        }
+        
+        /* Styles CSS pour l'impression */
+        @media print {
+            /* Afficher les informations du client */
+            .client-info {
+                display: block;
+            }
+            button, .logo-upload {
+                display: none;
+                margin-right: 20px;
+            }
+            
+            /* Afficher la date d'impression */
+            .print-date {
+                text-align: right;
+                margin-top: 10px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Facture</h1>
+        <div class="info">
+            <!-- Logo Container -->
+            <div class="logo-container">
+                <img id="companyLogo" src="path_to_default_logo.jpg" alt="Logo de la société">
+            </div>
+            <p><strong>Votre Société:</strong> Ma Société</p>
+            <p><strong>Adresse:</strong> 123 Rue de la Société</p>
+        </div>
+        <div class="client-info">
+            <p><strong>Nom du client:</strong> <input type="text" id="clientName" /></p>
+            <p><strong>Adresse du client:</strong> <input type="text" id="clientAddress" /></p>
+        </div>
+        <table id="invoiceTable">
+            <tr>
+                <th>Description</th>
+                <th>Quantité</th>
+                <th>Prix unitaire</th>
+                <th>Total</th>
+            </tr>
+            <tr>
+                <td><input type="text" class="description" placeholder="Description de l'article" /></td>
+                <td><input type="number" class="quantity" placeholder="Quantité" oninput="calculateRowTotal(this)"></td>
+                <td><input type="number" class="price" placeholder="Prix unitaire" oninput="calculateRowTotal(this)"></td>
+                <td><span class="rowTotal">0</span></td>
+            </tr>
+            <tr class="new-row">
+                <td><input type="text" class="description" placeholder="Nouvel article" /></td>
+                <td><input type="number" class="quantity" oninput="calculateRowTotal(this)" /></td>
+                <td><input type="number" class="price" oninput="calculateRowTotal(this)" /></td>
+                <td><span class="rowTotal">0</span></td>
+            </tr>
+        </table>
+        <button onclick="ajouterLigne()">Ajouter une ligne</button>
+        <table id="deliveryTable">
+            <tr>
+                <td><strong>Frais de livraison</strong></td>
+                <td><strong>Dans toutes la Tunisie</strong></td>
+                <td><span>7 DT</span></td>
+            </tr>
+        </table>
+        <div class="total">
+            <span>Total général: <span id="grandTotal">7</span> DT</span>
+        </div>
+        <!-- Date d'impression -->
+        <div class="print-date">
+           <h4><span id="date"></span></h4>
+        </div>
+        <button onclick="imprimerFacture()" id="print-button">Imprimer la facture</button>
+        <input type="file" id="logoInput" class="logo-upload" accept="image/*" onchange="loadLogo(event)">
+        <button onclick="clearLogo()">Effacer le logo</button>
+    </div>
+    
+    <script>
+           // Fonction pour charger un logo
+           function loadLogo(event) {
+            var logo = document.getElementById('companyLogo');
+            logo.src = URL.createObjectURL(event.target.files[0]);
+        }
+
+        // Fonction pour effacer le logo
+        function clearLogo() {
+            var logo = document.getElementById('companyLogo');
+            logo.src = 'path_to_default_logo.jpg'; // Remplacez par le chemin de votre logo par défaut
+            document.getElementById('logoInput').value = ''; // Efface le fichier sélectionné dans l'input file
+        }
+        function calculateRowTotal(input) {
+            var row = input.parentElement.parentElement;
+            var quantity = row.querySelector('.quantity').value;
+            var price = row.querySelector('.price').value;
+            var rowTotal = row.querySelector('.rowTotal');
+            var total = quantity * price;
+            rowTotal.textContent = total;
+            calculateGrandTotal();
+        }
+
+        function calculateGrandTotal() {
+            var rowTotals = document.querySelectorAll('.rowTotal');
+            var grandTotal = 0;
+            rowTotals.forEach(function (rowTotal) {
+                grandTotal += parseFloat(rowTotal.textContent);
+            });
+            grandTotal += 7; // Frais de livraison de 7 DT
+            document.getElementById('grandTotal').textContent = grandTotal;
+        }
+
+        function ajouterLigne() {
+            var table = document.getElementById("invoiceTable");
+            var newRow = table.querySelector('.new-row').cloneNode(true);
+            newRow.classList.remove('new-row');
+            newRow.style.display = 'table-row';
+            table.appendChild(newRow);
+        }
+
+        function imprimerFacture() {
+            // Ajouter la date d'impression
+            var dateElement = document.getElementById('date');
+            var currentDate = new Date();
+            dateElement.textContent = currentDate.toLocaleDateString();
+            
+            window.print();
+        }
+    </script>
+</body>
+</html>
+
